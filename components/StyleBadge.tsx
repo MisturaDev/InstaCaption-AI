@@ -10,8 +10,8 @@ interface StyleBadgeProps {
 
 const StyleBadge: React.FC<StyleBadgeProps> = ({ style, isSelected, onClick }) => {
   const getStyleColor = (s: CaptionStyle) => {
-    if (isSelected) return 'bg-indigo-600 text-white shadow-md scale-105';
-    return 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200';
+    if (isSelected) return 'bg-indigo-600 text-white shadow-md scale-105 dark:bg-indigo-500';
+    return 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700';
   };
 
   return (
