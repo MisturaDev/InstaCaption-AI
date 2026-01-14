@@ -1,29 +1,35 @@
 
-import React, { useState, useCallback } from 'react';
-import { Sparkles, Send, RefreshCw, Instagram, Hash } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, RefreshCw, Instagram, Hash, AlertCircle } from 'lucide-react';
 import { CaptionStyle } from './types';
 import StyleBadge from './components/StyleBadge';
 import CaptionCard from './components/CaptionCard';
-import { generateCaptions } from './services/geminiService';
+import { generateCaption } from './services/geminiService';
 
 const App: React.FC = () => {
   const [topic, setTopic] = useState('');
   const [style, setStyle] = useState<CaptionStyle>(CaptionStyle.FUNNY);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<string[]>([]);
+  const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!topic.trim()) return;
+    
+    // 1. Input Validation
+    if (!topic.trim()) {
+      setError('Please enter a topic to generate a caption!');
+      setResult(null);
+      return;
+    }
 
     setLoading(true);
     setError(null);
     try {
-      const captions = await generateCaptions(topic, style);
-      setResults(captions);
+      const caption = await generateCaption(topic, style);
+      setResult(caption);
     } catch (err: any) {
-      setError(err.message || 'Failed to generate captions. Please try again.');
+      setError(err.message || 'Failed to generate caption. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -56,13 +62,21 @@ const App: React.FC = () => {
                   type="text"
                   placeholder="e.g. coffee morning, beach sunset, Monday vibes"
                   value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-gray-900 text-lg shadow-inner"
+                  onChange={(e) => {
+                    setTopic(e.target.value);
+                    if (error) setError(null); // Clear error when user types
+                  }}
+                  className={`w-full px-5 py-4 bg-white border ${error ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200'} rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-gray-900 text-lg shadow-inner`}
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
                   <Hash className="w-5 h-5" />
                 </div>
               </div>
+              {error && (
+                <p className="mt-2 text-red-500 text-sm flex items-center gap-1 ml-1 animate-in fade-in slide-in-from-top-1">
+                  <AlertCircle className="w-4 h-4" /> {error}
+                </p>
+              )}
             </div>
 
             <div>
@@ -81,64 +95,61 @@ const App: React.FC = () => {
               </div>
             </div>
 
+            {/* 2. Loading state button */}
             <button
-              disabled={loading || !topic.trim()}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-all transform active:scale-[0.98]"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-all transform active:scale-[0.98] disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
                   <RefreshCw className="w-5 h-5 animate-spin" />
-                  Generating Magic...
+                  Generating caption...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5" />
-                  Generate Captions
+                  Generate Caption
                 </>
               )}
             </button>
           </form>
         </section>
 
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm flex items-center gap-2 animate-pulse">
-            <span className="font-bold">Error:</span> {error}
-          </div>
-        )}
-
         <section className="space-y-4">
-          {results.length > 0 && !loading && (
-            <div className="flex items-center justify-between mb-2 px-1">
+          {/* 3. Single caption output & 4. Regenerate option */}
+          {result && !loading && (
+            <div className="flex items-center justify-between mb-2 px-1 animate-in fade-in slide-in-from-bottom-2">
               <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400">
-                Generated for you
+                Your AI Caption
               </h2>
               <button 
                 onClick={() => handleGenerate()}
-                className="text-indigo-600 text-sm font-semibold hover:underline flex items-center gap-1"
+                className="text-indigo-600 text-sm font-semibold hover:underline flex items-center gap-1 transition-colors"
               >
-                <RefreshCw className="w-3 h-3" /> Refresh
+                <RefreshCw className="w-3 h-3" /> Regenerate
               </button>
             </div>
           )}
           
-          <div className="space-y-4">
+          <div className="min-h-[100px]">
             {loading ? (
-              [1, 2, 3].map((n) => (
-                <div key={n} className="h-24 bg-white/40 border border-white animate-pulse rounded-2xl shadow-sm" />
-              ))
+              <div className="h-32 bg-white/40 border border-white animate-pulse rounded-2xl shadow-sm flex items-center justify-center">
+                <span className="text-gray-400 text-sm font-medium">Drafting something catchy...</span>
+              </div>
+            ) : result ? (
+              <div className="animate-in zoom-in-95 duration-300">
+                <CaptionCard text={result} />
+              </div>
             ) : (
-              results.map((caption, idx) => (
-                <CaptionCard key={idx} text={caption} />
-              ))
+              !error && (
+                <div className="py-12 text-center text-gray-400">
+                  <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                  <p>Your creative journey starts with a topic above.</p>
+                </div>
+              )
             )}
           </div>
-
-          {!loading && results.length === 0 && !error && (
-            <div className="py-12 text-center text-gray-400">
-              <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20" />
-              <p>Your creative journey starts with a topic above.</p>
-            </div>
-          )}
         </section>
       </main>
 
