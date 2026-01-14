@@ -4,13 +4,13 @@ import { Sparkles, RefreshCw, Instagram, Hash, AlertCircle, Sun, Moon } from 'lu
 import { CaptionStyle } from './types';
 import StyleBadge from './components/StyleBadge';
 import CaptionCard from './components/CaptionCard';
-import { generateCaption } from './services/geminiService';
+import { generateCaptions } from './services/geminiService';
 
 const App: React.FC = () => {
   const [topic, setTopic] = useState('');
   const [style, setStyle] = useState<CaptionStyle>(CaptionStyle.FUNNY);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [results, setResults] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   
   // Initialize state from localStorage
@@ -37,17 +37,17 @@ const App: React.FC = () => {
     
     if (!topic.trim()) {
       setError('Please enter a topic to generate a caption!');
-      setResult(null);
+      setResults([]);
       return;
     }
 
     setLoading(true);
     setError(null);
     try {
-      const caption = await generateCaption(topic, style);
-      setResult(caption);
+      const captions = await generateCaptions(topic, style);
+      setResults(captions);
     } catch (err: any) {
-      setError(err.message || 'Failed to generate caption. Please try again.');
+      setError(err.message || 'Failed to generate captions. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ const App: React.FC = () => {
         </p>
       </header>
 
-      <main className="w-full max-w-2xl space-y-8">
+      <main className="w-full max-w-2xl space-y-8 pb-20">
         <section className="bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 p-6 sm:p-8 rounded-3xl shadow-xl shadow-gray-200/50 dark:shadow-none transition-all">
           <form onSubmit={handleGenerate} className="space-y-6">
             <div>
@@ -134,12 +134,12 @@ const App: React.FC = () => {
               {loading ? (
                 <>
                   <RefreshCw className="w-5 h-5 animate-spin" />
-                  Generating caption...
+                  Generating captions...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5" />
-                  Generate Caption
+                  Generate Captions
                 </>
               )}
             </button>
@@ -147,29 +147,37 @@ const App: React.FC = () => {
         </section>
 
         <section className="space-y-4">
-          {result && !loading && (
+          {results.length > 0 && !loading && (
             <div className="flex items-center justify-between mb-2 px-1 animate-in fade-in slide-in-from-bottom-2">
               <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                Your AI Caption
+                Top AI Captions
               </h2>
               <button 
                 onClick={() => handleGenerate()}
                 title="Click to get another caption without changing the topic"
                 className="text-indigo-600 dark:text-indigo-400 text-sm font-semibold hover:underline flex items-center gap-1 transition-colors"
               >
-                <RefreshCw className="w-3 h-3" /> Regenerate
+                <RefreshCw className="w-3 h-3" /> Regenerate All
               </button>
             </div>
           )}
           
-          <div className="min-h-[100px]">
+          <div className="space-y-4 min-h-[100px]">
             {loading ? (
-              <div className="h-32 bg-white/40 dark:bg-white/5 border border-white dark:border-white/10 animate-pulse rounded-2xl shadow-sm flex items-center justify-center">
-                <span className="text-gray-400 dark:text-gray-500 text-sm font-medium">Drafting something catchy...</span>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-24 bg-white/40 dark:bg-white/5 border border-white dark:border-white/10 animate-pulse rounded-2xl shadow-sm flex items-center justify-center">
+                    <span className="text-gray-400 dark:text-gray-500 text-sm font-medium">Curating your caption {i}...</span>
+                  </div>
+                ))}
               </div>
-            ) : result ? (
-              <div className="animate-in zoom-in-95 duration-300">
-                <CaptionCard text={result} />
+            ) : results.length > 0 ? (
+              <div className="space-y-4">
+                {results.map((caption, idx) => (
+                  <div key={idx} className="animate-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${idx * 150}ms` }}>
+                    <CaptionCard text={caption} />
+                  </div>
+                ))}
               </div>
             ) : (
               !error && (
