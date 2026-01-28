@@ -4,12 +4,12 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: './',        
-  build: {
-    outDir: 'dist'   
-  },
+  base: './',
   define: {
-    'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY)
+    'process.env.API_KEY': JSON.stringify(process.env.GEMINI_API_KEY || process.env.API_KEY)
+  },
+  build: {
+    outDir: 'dist'
   },
   resolve: {
     alias: {
