@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [hashtagCopied, setHashtagCopied] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('insta-caption-theme');
@@ -32,6 +33,14 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
+  // Handle auto-hide for success message
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => setShowSuccess(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
+
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
 
   const handleClearAll = () => {
@@ -41,6 +50,7 @@ const App: React.FC = () => {
     setHashtags([]);
     setError(null);
     setIncludeHashtags(false);
+    setShowSuccess(false);
   };
 
   const handleGenerate = async (e?: React.FormEvent) => {
@@ -55,10 +65,12 @@ const App: React.FC = () => {
 
     setLoading(true);
     setError(null);
+    setShowSuccess(false);
     try {
       const { captions, hashtags: generatedHashtags } = await generateCaptions(topic, style, includeHashtags);
       setResults(captions);
       setHashtags(generatedHashtags);
+      setShowSuccess(true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -233,17 +245,27 @@ const App: React.FC = () => {
 
             <section className="space-y-6">
               {(results.length > 0 || hashtags.length > 0) && !loading && (
-                <div className="flex items-center justify-between mb-2 px-1 animate-in fade-in slide-in-from-bottom-2">
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                    AI Magic Results
-                  </h2>
-                  <button 
-                    onClick={() => handleGenerate()}
-                    title="Get another batch without changing settings"
-                    className="text-indigo-600 dark:text-indigo-400 text-sm font-semibold hover:underline flex items-center gap-1 transition-colors"
-                  >
-                    <RefreshCw className="w-3 h-3" /> Refresh Results
-                  </button>
+                <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2">
+                  {/* Success Message */}
+                  {showSuccess && (
+                    <div className="flex items-center justify-center gap-2 mb-6 py-2.5 px-6 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 rounded-full shadow-sm animate-in slide-in-from-top-4 fade-in duration-700 transition-all">
+                      <Sparkles className="w-4 h-4" />
+                      <span className="text-sm font-bold tracking-tight">Caption ready! Copy and share it now. ✨</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                      AI Magic Results
+                    </h2>
+                    <button 
+                      onClick={() => handleGenerate()}
+                      title="Get another batch without changing settings"
+                      className="text-indigo-600 dark:text-indigo-400 text-sm font-semibold hover:underline flex items-center gap-1 transition-colors"
+                    >
+                      <RefreshCw className="w-3 h-3" /> Refresh Results
+                    </button>
+                  </div>
                 </div>
               )}
               
