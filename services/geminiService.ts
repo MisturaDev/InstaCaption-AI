@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { CaptionStyle } from "../types";
+import { CaptionStyle, Language } from "../types";
 
 const API_KEY = process.env.API_KEY || "";
 
@@ -12,7 +12,8 @@ export interface GenerationResult {
 export const generateCaptions = async (
   topic: string, 
   style: CaptionStyle, 
-  includeHashtags: boolean
+  includeHashtags: boolean,
+  language: Language = Language.ENGLISH
 ): Promise<GenerationResult> => {
   if (!API_KEY) {
     throw new Error("API Key is missing. Please ensure process.env.API_KEY is set.");
@@ -23,16 +24,17 @@ export const generateCaptions = async (
   const systemInstruction = `
     You are a world-class social media strategist and creative copywriter specializing in Instagram.
     Your task is to generate 3 distinct, unique, and high-engagement Instagram captions based on a provided topic and style.
-    ${includeHashtags ? 'Additionally, provide a list of 5-10 relevant trending hashtags.' : ''}
+    CRITICAL: All generated captions MUST be in the ${language} language.
+    ${includeHashtags ? 'Additionally, provide a list of 5-10 relevant trending hashtags in the same language.' : ''}
     
     Guidelines:
     - Each caption should be unique in structure and tone within the requested style.
     - Keep them short and catchy (5-25 words).
     - Use relevant emojis.
-    - If hashtags are requested, return them as a separate array of strings without the '#' symbol (or with it, as long as it's consistent).
+    - If hashtags are requested, return them as a separate array of strings without the '#' symbol.
   `;
 
-  const prompt = `Topic: "${topic}"\nStyle: "${style}"\nInclude Hashtags: ${includeHashtags}\n\nPlease provide exactly 3 unique captions${includeHashtags ? ' and a list of hashtags' : ''}.`;
+  const prompt = `Topic: "${topic}"\nStyle: "${style}"\nLanguage: "${language}"\nInclude Hashtags: ${includeHashtags}\n\nPlease provide exactly 3 unique captions in ${language}${includeHashtags ? ' and a list of hashtags' : ''}.`;
 
   try {
     const response = await ai.models.generateContent({

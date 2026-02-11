@@ -8,6 +8,13 @@ export enum CaptionStyle {
   PUNNY = 'Punny'
 }
 
+export enum Language {
+  ENGLISH = 'English',
+  SPANISH = 'Spanish',
+  FRENCH = 'French',
+  GERMAN = 'German'
+}
+
 export interface GeneratedCaption {
   id: string;
   text: string;

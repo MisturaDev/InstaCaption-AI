@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, RefreshCw, Instagram, Hash, AlertCircle, Sun, Moon, Trash2, Copy, Check, ArrowRight } from 'lucide-react';
-import { CaptionStyle } from './types';
+import { Sparkles, RefreshCw, Instagram, Hash, AlertCircle, Sun, Moon, Trash2, Copy, Check, ArrowRight, Languages, ChevronDown } from 'lucide-react';
+import { CaptionStyle, Language } from './types';
 import StyleBadge from './components/StyleBadge';
 import CaptionCard from './components/CaptionCard';
 import { generateCaptions } from './services/geminiService';
@@ -10,6 +10,7 @@ const App: React.FC = () => {
   const [showLanding, setShowLanding] = useState(true);
   const [topic, setTopic] = useState('');
   const [style, setStyle] = useState<CaptionStyle>(CaptionStyle.FUNNY);
+  const [language, setLanguage] = useState<Language>(Language.ENGLISH);
   const [includeHashtags, setIncludeHashtags] = useState(false);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<string[]>([]);
@@ -46,6 +47,7 @@ const App: React.FC = () => {
   const handleClearAll = () => {
     setTopic('');
     setStyle(CaptionStyle.FUNNY);
+    setLanguage(Language.ENGLISH);
     setResults([]);
     setHashtags([]);
     setError(null);
@@ -67,7 +69,7 @@ const App: React.FC = () => {
     setError(null);
     setShowSuccess(false);
     try {
-      const { captions, hashtags: generatedHashtags } = await generateCaptions(topic, style, includeHashtags);
+      const { captions, hashtags: generatedHashtags } = await generateCaptions(topic, style, includeHashtags, language);
       setResults(captions);
       setHashtags(generatedHashtags);
       setShowSuccess(true);
@@ -156,6 +158,36 @@ const App: React.FC = () => {
           <main className="w-full max-w-2xl space-y-8 pb-20">
             <section className="bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 p-6 sm:p-8 rounded-3xl shadow-xl shadow-gray-200/50 dark:shadow-none transition-all">
               <form onSubmit={handleGenerate} className="space-y-6">
+                
+                {/* Language Selector */}
+                <div className="animate-in fade-in duration-500">
+                  <label htmlFor="language" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1">
+                    Select Language
+                  </label>
+                  <div className="relative">
+                    <select
+                      id="language"
+                      value={language}
+                      onChange={(e) => setLanguage(e.target.value as Language)}
+                      disabled={loading}
+                      className="w-full appearance-none px-5 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-gray-900 dark:text-white text-lg shadow-inner disabled:opacity-50 cursor-pointer"
+                    >
+                      {Object.values(Language).map((lang) => (
+                        <option key={lang} value={lang}>{lang}</option>
+                      ))}
+                    </select>
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 pointer-events-none">
+                      <Languages className="w-5 h-5" />
+                    </div>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                      <ChevronDown className="w-5 h-5" />
+                    </div>
+                    <style>{`
+                      #language { padding-left: 3rem; }
+                    `}</style>
+                  </div>
+                </div>
+
                 <div>
                   <label htmlFor="topic" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1">
                     What's your post about?
