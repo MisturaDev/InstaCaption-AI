@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, RefreshCw, Instagram, Hash, AlertCircle, Sun, Moon, Trash2, Copy, Check, ArrowRight, Languages, ChevronDown } from 'lucide-react';
-import { CaptionStyle, Language } from './types';
+import { Sparkles, RefreshCw, Instagram, Hash, AlertCircle, Sun, Moon, Trash2, Copy, Check, ArrowRight, Languages, ChevronDown, Globe } from 'lucide-react';
+import { CaptionStyle, Language, LANGUAGE_OPTIONS } from './types';
 import StyleBadge from './components/StyleBadge';
 import CaptionCard from './components/CaptionCard';
 import { generateCaptions } from './services/geminiService';
@@ -11,6 +11,8 @@ const App: React.FC = () => {
   const [topic, setTopic] = useState('');
   const [style, setStyle] = useState<CaptionStyle>(CaptionStyle.FUNNY);
   const [language, setLanguage] = useState<Language>(Language.ENGLISH);
+  const [lastGeneratedLanguage, setLastGeneratedLanguage] = useState<Language | null>(null);
+  const [lastGeneratedStyle, setLastGeneratedStyle] = useState<CaptionStyle | null>(null);
   const [includeHashtags, setIncludeHashtags] = useState(false);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<string[]>([]);
@@ -53,6 +55,8 @@ const App: React.FC = () => {
     setError(null);
     setIncludeHashtags(false);
     setShowSuccess(false);
+    setLastGeneratedLanguage(null);
+    setLastGeneratedStyle(null);
   };
 
   const handleGenerate = async (e?: React.FormEvent) => {
@@ -72,9 +76,11 @@ const App: React.FC = () => {
       const { captions, hashtags: generatedHashtags } = await generateCaptions(topic, style, includeHashtags, language);
       setResults(captions);
       setHashtags(generatedHashtags);
+      setLastGeneratedLanguage(language);
+      setLastGeneratedStyle(style);
       setShowSuccess(true);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'An error occurred while generating captions.');
     } finally {
       setLoading(false);
     }
@@ -86,6 +92,8 @@ const App: React.FC = () => {
     setHashtagCopied(true);
     setTimeout(() => setHashtagCopied(false), 2000);
   };
+
+  const selectedLangInfo = LANGUAGE_OPTIONS.find(l => l.value === language);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#fdfcfb] to-[#e2d1c3] dark:from-[#0f172a] dark:to-[#1e1b4b] transition-colors duration-500">
@@ -112,7 +120,7 @@ const App: React.FC = () => {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">InstaCaption AI</span>
           </h1>
           <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-12 leading-relaxed">
-            Generate short, catchy social media captions from a topic and style. Boost your engagement instantly!
+            Generate short, catchy social media captions in any language and style. Boost your engagement globally!
           </p>
           <button 
             onClick={() => setShowLanding(false)}
@@ -122,10 +130,14 @@ const App: React.FC = () => {
             <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
           </button>
           
-          <div className="mt-16 flex justify-center gap-8 opacity-50 grayscale hover:grayscale-0 transition-all">
+          <div className="mt-16 flex flex-wrap justify-center gap-8 opacity-60 grayscale hover:grayscale-0 transition-all">
              <div className="flex flex-col items-center gap-2">
                 <Sparkles className="w-6 h-6 text-indigo-500" />
                 <span className="text-xs font-bold uppercase tracking-widest dark:text-white">AI Driven</span>
+             </div>
+             <div className="flex flex-col items-center gap-2">
+                <Languages className="w-6 h-6 text-emerald-500" />
+                <span className="text-xs font-bold uppercase tracking-widest dark:text-white">12+ Languages</span>
              </div>
              <div className="flex flex-col items-center gap-2">
                 <Hash className="w-6 h-6 text-pink-500" />
@@ -161,30 +173,37 @@ const App: React.FC = () => {
                 
                 {/* Language Selector */}
                 <div className="animate-in fade-in duration-500">
-                  <label htmlFor="language" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 ml-1">
-                    Select Language
-                  </label>
+                  <div className="flex items-center justify-between mb-2 ml-1">
+                    <label htmlFor="language" className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                      <Languages className="w-4 h-4 text-indigo-500" />
+                      Select Language
+                    </label>
+                    {selectedLangInfo && (
+                      <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                        {selectedLangInfo.flag} {selectedLangInfo.native}
+                      </span>
+                    )}
+                  </div>
                   <div className="relative">
                     <select
                       id="language"
                       value={language}
                       onChange={(e) => setLanguage(e.target.value as Language)}
                       disabled={loading}
-                      className="w-full appearance-none px-5 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-gray-900 dark:text-white text-lg shadow-inner disabled:opacity-50 cursor-pointer"
+                      className="w-full appearance-none pl-12 pr-10 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none text-gray-900 dark:text-white text-lg shadow-inner disabled:opacity-50 cursor-pointer"
                     >
-                      {Object.values(Language).map((lang) => (
-                        <option key={lang} value={lang}>{lang}</option>
+                      {LANGUAGE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                          {opt.flag} {opt.label} ({opt.native})
+                        </option>
                       ))}
                     </select>
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-500 pointer-events-none">
-                      <Languages className="w-5 h-5" />
+                      <Globe className="w-5 h-5" />
                     </div>
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                       <ChevronDown className="w-5 h-5" />
                     </div>
-                    <style>{`
-                      #language { padding-left: 3rem; }
-                    `}</style>
                   </div>
                 </div>
 
@@ -197,7 +216,7 @@ const App: React.FC = () => {
                       id="topic"
                       type="text"
                       disabled={loading}
-                      placeholder="Enter your topic, e.g., coffee, travel, fashion…"
+                      placeholder="Enter your topic, e.g., coffee, travel, sunset, fitness…"
                       value={topic}
                       onChange={(e) => {
                         setTopic(e.target.value);
@@ -216,7 +235,7 @@ const App: React.FC = () => {
                   )}
                 </div>
 
-                <div title="Choose a caption style: Funny, Casual, Professional">
+                <div title="Choose a caption style: Funny, Casual, Professional, etc.">
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 ml-1">
                     Choose a vibe
                   </label>
@@ -236,7 +255,7 @@ const App: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => !loading && setIncludeHashtags(!includeHashtags)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${includeHashtags ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'}`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${includeHashtags ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700'}`}
                   >
                     <span className={`${includeHashtags ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
                   </button>
@@ -248,17 +267,17 @@ const App: React.FC = () => {
                     type="submit"
                     disabled={loading}
                     title="Click to get your caption"
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 disabled:bg-indigo-300 dark:disabled:bg-indigo-900/50 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-2 transition-all transform active:scale-[0.98] disabled:cursor-not-allowed"
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 disabled:bg-indigo-300 dark:disabled:bg-indigo-900/50 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-2 transition-all transform active:scale-[0.98] disabled:cursor-not-allowed cursor-pointer"
                   >
                     {loading ? (
                       <>
                         <RefreshCw className="w-5 h-5 animate-spin" />
-                        Generating...
+                        Generating in {selectedLangInfo?.label || language}...
                       </>
                     ) : (
                       <>
                         <Sparkles className="w-5 h-5" />
-                        Generate
+                        Generate Captions
                       </>
                     )}
                   </button>
@@ -267,7 +286,7 @@ const App: React.FC = () => {
                     onClick={handleClearAll}
                     disabled={loading}
                     title="Clear all inputs and results"
-                    className="px-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 font-bold rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all disabled:opacity-50"
+                    className="px-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 font-bold rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all disabled:opacity-50 cursor-pointer"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
@@ -282,7 +301,7 @@ const App: React.FC = () => {
                   {showSuccess && (
                     <div className="flex items-center justify-center gap-2 mb-6 py-2.5 px-6 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 rounded-full shadow-sm animate-in slide-in-from-top-4 fade-in duration-700 transition-all">
                       <Sparkles className="w-4 h-4" />
-                      <span className="text-sm font-bold tracking-tight">Caption ready! Copy and share it now. ✨</span>
+                      <span className="text-sm font-bold tracking-tight">Captions ready in {lastGeneratedLanguage || language}! Copy and share now. ✨</span>
                     </div>
                   )}
 
@@ -293,7 +312,7 @@ const App: React.FC = () => {
                     <button 
                       onClick={() => handleGenerate()}
                       title="Get another batch without changing settings"
-                      className="text-indigo-600 dark:text-indigo-400 text-sm font-semibold hover:underline flex items-center gap-1 transition-colors"
+                      className="text-indigo-600 dark:text-indigo-400 text-sm font-semibold hover:underline flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       <RefreshCw className="w-3 h-3" /> Refresh Results
                     </button>
@@ -306,7 +325,7 @@ const App: React.FC = () => {
                   <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
                       <div key={i} className="h-24 bg-white/40 dark:bg-white/5 border border-white dark:border-white/10 animate-pulse rounded-2xl flex items-center justify-center">
-                        <span className="text-gray-400 dark:text-gray-500 text-sm font-medium italic">Curating choice #{i}...</span>
+                        <span className="text-gray-400 dark:text-gray-500 text-sm font-medium italic">Curating caption #{i} in {selectedLangInfo?.label || language}...</span>
                       </div>
                     ))}
                   </div>
@@ -315,7 +334,11 @@ const App: React.FC = () => {
                     <div className="space-y-4">
                       {results.map((caption, idx) => (
                         <div key={idx} className="animate-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: `${idx * 150}ms` }}>
-                          <CaptionCard text={caption} />
+                          <CaptionCard 
+                            text={caption} 
+                            language={lastGeneratedLanguage || language}
+                            style={lastGeneratedStyle || style}
+                          />
                         </div>
                       ))}
                     </div>
@@ -324,13 +347,14 @@ const App: React.FC = () => {
                       <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 delay-500 p-6 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-3xl">
                         <div className="flex justify-between items-center mb-4">
                           <h3 className="text-sm font-bold text-indigo-900 dark:text-indigo-300 uppercase tracking-widest flex items-center gap-2">
-                            <Hash className="w-4 h-4" /> Recommended Hashtags
+                            <Hash className="w-4 h-4" /> Recommended Hashtags ({lastGeneratedLanguage || language})
                           </h3>
                           <button 
                             onClick={copyHashtags}
-                            className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm text-indigo-600 dark:text-indigo-400 hover:scale-105 transition-all"
+                            className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm text-indigo-600 dark:text-indigo-400 hover:scale-105 transition-all cursor-pointer"
+                            title="Copy hashtags"
                           >
-                            {hashtagCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            {hashtagCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                           </button>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -356,7 +380,7 @@ const App: React.FC = () => {
           </main>
 
           <footer className="mt-auto pt-12 text-gray-400 dark:text-gray-500 text-xs text-center">
-            <p>© {new Date().getFullYear()} InstaCaptions AI • Powered by Gemini 3</p>
+            <p>© {new Date().getFullYear()} InstaCaptions AI • Powered by Gemini</p>
           </footer>
         </div>
       )}

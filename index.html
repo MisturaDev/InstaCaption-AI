@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>InstaCaptions AI</title>
+    <meta name="description" content="A sleek, AI-powered tool to generate catchy, high-engagement Instagram captions based on any topic or mood with multi-language support." />
+    <meta property="og:title" content="InstaCaptions AI" />
+    <meta property="og:description" content="A sleek, AI-powered tool to generate catchy, high-engagement Instagram captions based on any topic or mood with multi-language support." />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -19,11 +22,9 @@
         },
       }
     </script>
-    <style type="text/tailwindcss">
-      @layer components {
-        .heading-font {
-          font-family: 'Outfit', sans-serif;
-        }
+    <style>
+      .heading-font {
+        font-family: 'Outfit', sans-serif;
       }
     </style>
     <script type="importmap">
@@ -40,8 +41,10 @@
   }
 }
 </script>
-  </head>
+  <link rel="stylesheet" href="/index.css">
+</head>
   <body>
     <div id="root"></div>
-  </body>
+  <script type="module" src="/index.tsx"></script>
+</body>
 </html>

@@ -2,7 +2,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { CaptionStyle, Language } from "../types";
 
-const API_KEY = process.env.API_KEY || "";
+const API_KEY = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
 
 export interface GenerationResult {
   captions: string[];
@@ -16,7 +16,7 @@ export const generateCaptions = async (
   language: Language = Language.ENGLISH
 ): Promise<GenerationResult> => {
   if (!API_KEY) {
-    throw new Error("API Key is missing. Please ensure process.env.API_KEY is set.");
+    throw new Error("API Key is missing. Please ensure GEMINI_API_KEY is configured.");
   }
 
   const ai = new GoogleGenAI({ apiKey: API_KEY });
@@ -24,21 +24,24 @@ export const generateCaptions = async (
   const systemInstruction = `
     You are a world-class social media strategist and creative copywriter specializing in Instagram.
     Your task is to generate 3 distinct, unique, and high-engagement Instagram captions based on a provided topic and style.
-    CRITICAL: All generated captions MUST be in the ${language} language.
-    ${includeHashtags ? 'Additionally, provide a list of 5-10 relevant trending hashtags in the same language.' : ''}
     
-    Guidelines:
-    - Each caption should be unique in structure and tone within the requested style.
-    - Keep them short and catchy (5-25 words).
-    - Use relevant emojis.
-    - If hashtags are requested, return them as a separate array of strings without the '#' symbol.
+    CRITICAL MULTI-LANGUAGE INSTRUCTION:
+    - All generated captions MUST be written natively and fluently in the ${language} language.
+    - Adapt idioms, humor, wordplay, and tone appropriately for native ${language} speakers rather than using literal translation.
+    ${includeHashtags ? `- Additionally, provide 5-10 relevant trending hashtags in ${language} (or popular international tags used by the ${language}-speaking community) relevant to the topic.` : ''}
+    
+    Style Guidelines:
+    - Style: ${style} (match the tone and nuance of this style faithfully).
+    - Length: Keep each caption punchy, short, and catchy (5-25 words).
+    - Formatting: Include relevant aesthetic emojis.
+    - If hashtags are requested, return them as a separate array of clean strings without the '#' symbol.
   `;
 
-  const prompt = `Topic: "${topic}"\nStyle: "${style}"\nLanguage: "${language}"\nInclude Hashtags: ${includeHashtags}\n\nPlease provide exactly 3 unique captions in ${language}${includeHashtags ? ' and a list of hashtags' : ''}.`;
+  const prompt = `Topic: "${topic}"\nDesired Style: "${style}"\nLanguage: "${language}"\nInclude Hashtags: ${includeHashtags}\n\nPlease generate exactly 3 unique, top-tier Instagram captions in ${language}${includeHashtags ? ' along with trending hashtags' : ''}.`;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.8-flash",
       contents: prompt,
       config: {
         systemInstruction,
@@ -68,8 +71,11 @@ export const generateCaptions = async (
       captions: result.captions || [],
       hashtags: result.hashtags || []
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Generation Error:", error);
-    throw new Error("The AI is a bit busy right now. Please try again in a moment!");
+    if (error?.message?.includes("API_KEY")) {
+      throw error;
+    }
+    throw new Error("Unable to generate captions right now. Please try again in a moment!");
   }
 };
