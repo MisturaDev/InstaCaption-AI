@@ -18,7 +18,15 @@ AI-powered Instagram caption generator that helps you create engaging captions b
 
 ## Screenshots
 
-<!-- Add your screenshots here -->
+| Dark Home | Home |
+|-----------|------|
+| ![Dark Home](Dark-Home.png) | ![Home](Home.png) |
+
+| Generator | Result |
+|-----------|--------|
+| ![Generator](Generator.png) | ![Result](Result.png) |
+
+---
 
 ## Tech Stack
 
